@@ -322,6 +322,14 @@ static void dp8393x_do_read_rra(dp8393xState *s)
     DPRINTF("CRBA0/1: 0x%04x/0x%04x, RBWC0/1: 0x%04x/0x%04x\n",
         s->regs[SONIC_CRBA0], s->regs[SONIC_CRBA1],
         s->regs[SONIC_RBWC0], s->regs[SONIC_RBWC1]);
+}
+
+static void dp8393x_advance_rrp(dp8393xState *s)
+{
+    int width, size;
+
+    width = (s->regs[SONIC_DCR] & SONIC_DCR_DW) ? 2 : 1;
+    size = sizeof(uint16_t) * 4 * width;
 
     /* Go to next entry */
     s->regs[SONIC_RRP] += size;
@@ -847,6 +855,7 @@ static ssize_t dp8393x_receive(NetClientState *nc, const uint8_t * buf,
 
         if (s->regs[SONIC_RCR] & SONIC_RCR_LPKT) {
             /* Read next RRA */
+            dp8393x_advance_rrp(s);
             dp8393x_do_read_rra(s);
         }
     }
