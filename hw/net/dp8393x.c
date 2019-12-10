@@ -773,8 +773,6 @@ static ssize_t dp8393x_receive(NetClientState *nc, const uint8_t * buf,
         if (s->regs[SONIC_LLFA] & 0x1) {
             /* Still EOL ; stop reception */
             return -1;
-        } else {
-            s->regs[SONIC_CRDA] = s->regs[SONIC_LLFA];
         }
     }
 
@@ -823,7 +821,7 @@ static ssize_t dp8393x_receive(NetClientState *nc, const uint8_t * buf,
     address_space_rw(&s->as, dp8393x_crda(s),
         MEMTXATTRS_UNSPECIFIED, (uint8_t *)s->data, size, 1);
 
-    /* Move to next descriptor */
+    /* Check link field */
     size = sizeof(uint16_t) * width;
     address_space_rw(&s->as, dp8393x_crda(s) + sizeof(uint16_t) * 5 * width,
         MEMTXATTRS_UNSPECIFIED, (uint8_t *)s->data, size, 0);
@@ -841,6 +839,8 @@ static ssize_t dp8393x_receive(NetClientState *nc, const uint8_t * buf,
         s->data[0] = 0;
         address_space_rw(&s->as, offset, MEMTXATTRS_UNSPECIFIED,
                          (uint8_t *)s->data, sizeof(uint16_t), 1);
+
+        /* Move to next descriptor */
         s->regs[SONIC_CRDA] = s->regs[SONIC_LLFA];
         s->regs[SONIC_ISR] |= SONIC_ISR_PKTRX;
         s->regs[SONIC_RSC] = (s->regs[SONIC_RSC] & 0xff00) | (((s->regs[SONIC_RSC] & 0x00ff) + 1) & 0x00ff);
