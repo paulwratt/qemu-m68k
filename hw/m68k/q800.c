@@ -155,6 +155,7 @@ static void q800_init(MachineState *machine)
     SysBusDevice *sysbus;
     BusState *adb_bus;
     NubusBus *nubus;
+    DriveInfo *dinfo;
 
     linux_boot = (kernel_filename != NULL);
 
@@ -239,6 +240,11 @@ static void q800_init(MachineState *machine)
     via_dev = qdev_create(NULL, TYPE_MAC_VIA);
     object_property_set_link(OBJECT(via_dev), OBJECT(rom), "rom_mr",
                              &error_abort);
+    dinfo = drive_get(IF_MTD, 0, 0);
+    if (dinfo) {
+        qdev_prop_set_drive(via_dev, "drive", blk_by_legacy_dinfo(dinfo),
+                            &error_abort);
+    }
     qdev_init_nofail(via_dev);
     sysbus = SYS_BUS_DEVICE(via_dev);
     sysbus_mmio_map(sysbus, 0, VIA_BASE);
